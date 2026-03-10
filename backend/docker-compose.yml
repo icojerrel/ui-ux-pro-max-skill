@@ -1,0 +1,53 @@
+# ─────────────────────────────────────────────────────────
+#  Bloei — Local development infrastructure
+#  Run: docker compose up -d
+# ─────────────────────────────────────────────────────────
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bloei-postgres
+    environment:
+      POSTGRES_DB:       bloei_db
+      POSTGRES_USER:     bloei
+      POSTGRES_PASSWORD: bloei_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bloei -d bloei_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: bloei-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+
+  # Optional: pgAdmin for DB browsing
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: bloei-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL:    admin@bloei.nl
+      PGADMIN_DEFAULT_PASSWORD: bloei_admin
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles: ["tools"]   # Start only with: docker compose --profile tools up -d
+
+volumes:
+  postgres_data:
+  redis_data:

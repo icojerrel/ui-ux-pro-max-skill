@@ -1,0 +1,480 @@
+// ─────────────────────────────────────────────────────────
+//  Bloei — Prisma Schema
+//  Dutch B2B Social Media SaaS
+// ─────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ══════════════════════════════════════════════════════════
+//  ENUMS
+// ══════════════════════════════════════════════════════════
+
+enum Plan {
+  SOLO        // €39/m
+  TEAM        // €99/m
+  ORGANISATIE // €229/m
+}
+
+enum BillingCycle {
+  MONTHLY
+  ANNUAL
+}
+
+enum Platform {
+  LINKEDIN
+  INSTAGRAM
+  TWITTER
+  FACEBOOK
+  TIKTOK
+  WHATSAPP_BUSINESS
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+  CANCELLED
+}
+
+enum PostType {
+  TEXT
+  IMAGE
+  VIDEO
+  CAROUSEL
+  PDF_DOCUMENT
+  STORY
+  REEL
+  THREAD
+  POLL
+}
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum AdvocacyStatus {
+  PENDING   // suggested to employee
+  SHARED    // employee posted it
+  DECLINED  // employee declined
+}
+
+enum AiJobType {
+  GENERATE_QUARTER   // 26-post Q-plan
+  GENERATE_SINGLE    // 1 post
+  SCORE_POST         // quality score
+  REPURPOSE          // blog/PDF → posts
+  IMPROVE            // rewrite existing
+}
+
+enum Language {
+  NL  // Dutch
+  FR  // French (BE)
+  EN  // English
+}
+
+// ══════════════════════════════════════════════════════════
+//  USERS & AUTHENTICATION
+// ══════════════════════════════════════════════════════════
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  name          String
+  avatarUrl     String?
+  locale        Language @default(NL)
+  timezone      String   @default("Europe/Amsterdam")
+  onboardingDone Boolean @default(false)
+
+  // Relations
+  ownedOrg      Organisation?       @relation("OrgOwner")
+  memberships   TeamMember[]
+  refreshTokens RefreshToken[]
+  aiJobs        AiJob[]
+  advocacyItems AdvocacyItem[]      @relation("EmployeeAdvocacy")
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  userAgent String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
+
+// ══════════════════════════════════════════════════════════
+//  ORGANISATION & TEAMS
+// ══════════════════════════════════════════════════════════
+
+model Organisation {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  logoUrl      String?
+  website      String?
+  sector       String?  // legal, accounting, IT, HR, recruitment, consulting
+  language     Language @default(NL)
+
+  // Billing
+  plan         Plan            @default(SOLO)
+  billingCycle BillingCycle    @default(MONTHLY)
+  trialEndsAt  DateTime?
+  subscriptionId String?       // Stripe subscription ID
+  billingEmail String?
+
+  // Owner
+  ownerId      String          @unique
+  owner        User            @relation("OrgOwner", fields: [ownerId], references: [id])
+
+  // Relations
+  members      TeamMember[]
+  brands       Brand[]
+  connections  PlatformConnection[]
+  posts        Post[]
+  campaigns    Campaign[]
+  aiJobs       AiJob[]
+  analytics    AnalyticsSnapshot[]
+  designSystem OrgDesignSystem?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("organisations")
+}
+
+model TeamMember {
+  id     String   @id @default(cuid())
+  role   TeamRole @default(VIEWER)
+
+  userId String
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  orgId  String
+  org    Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // Advocacy stats
+  advocacyScore  Int      @default(0)
+  advocacyStreak Int      @default(0) // consecutive weeks posted
+  postsShared    Int      @default(0)
+
+  joinedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, orgId])
+  @@map("team_members")
+}
+
+// ══════════════════════════════════════════════════════════
+//  BRANDS (multi-brand per org)
+// ══════════════════════════════════════════════════════════
+
+model Brand {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  logoUrl     String?
+  toneOfVoice String?  // stored as JSON: { formal: 7, playful: 3, ... }
+  keywords    String[] // brand keywords for AI context
+  sector      String?
+
+  orgId       String
+  org         Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  posts       Post[]
+  connections PlatformConnection[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("brands")
+}
+
+// ══════════════════════════════════════════════════════════
+//  PLATFORM CONNECTIONS (OAuth)
+// ══════════════════════════════════════════════════════════
+
+model PlatformConnection {
+  id               String   @id @default(cuid())
+  platform         Platform
+  platformUserId   String
+  platformName     String   // display name on the platform
+  platformUsername String?  // @handle
+  avatarUrl        String?
+
+  // Encrypted OAuth tokens
+  accessTokenEnc   String   // AES-256 encrypted
+  refreshTokenEnc  String?
+  tokenExpiresAt   DateTime?
+
+  // Metadata
+  followerCount    Int?
+  isActive         Boolean  @default(true)
+  lastSyncAt       DateTime?
+
+  orgId   String
+  org     Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  brandId String?
+  brand   Brand?       @relation(fields: [brandId], references: [id])
+
+  posts   Post[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([orgId, platform, platformUserId])
+  @@map("platform_connections")
+}
+
+// ══════════════════════════════════════════════════════════
+//  POSTS & SCHEDULING
+// ══════════════════════════════════════════════════════════
+
+model Post {
+  id           String     @id @default(cuid())
+  status       PostStatus @default(DRAFT)
+  type         PostType   @default(TEXT)
+
+  // Content per platform (can differ)
+  contentNl    String?    // Dutch content
+  contentFr    String?    // French content (BE)
+  contentEn    String?    // English content
+  hashtags     String[]
+  mediaUrls    String[]   // S3/CDN URLs
+
+  // LinkedIn specific
+  liTaggedPeople  String[] // LinkedIn member URNs
+  liArticleUrl    String?
+  liDocumentTitle String?
+
+  // Scheduling
+  scheduledAt  DateTime?
+  publishedAt  DateTime?
+  failureReason String?
+  retryCount   Int        @default(0)
+  jobId        String?    // BullMQ job ID
+
+  // AI metadata
+  aiGenerated  Boolean    @default(false)
+  aiScore      Int?       // 0-100 quality score
+  aiJobId      String?
+  aiJob        AiJob?     @relation(fields: [aiJobId], references: [id])
+
+  // Relations
+  orgId        String
+  org          Organisation      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  brandId      String?
+  brand        Brand?            @relation(fields: [brandId], references: [id])
+
+  connectionId String?
+  connection   PlatformConnection? @relation(fields: [connectionId], references: [id])
+
+  campaignId   String?
+  campaign     Campaign?         @relation(fields: [campaignId], references: [id])
+
+  analytics    PostAnalytics?
+  advocacyItems AdvocacyItem[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([orgId, status])
+  @@index([scheduledAt])
+  @@map("posts")
+}
+
+// ══════════════════════════════════════════════════════════
+//  CAMPAIGNS (content series / quarter plans)
+// ══════════════════════════════════════════════════════════
+
+model Campaign {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  postsTarget Int      @default(26) // Bloem default: 26/quarter
+  tags        String[]
+
+  orgId       String
+  org         Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  posts       Post[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("campaigns")
+}
+
+// ══════════════════════════════════════════════════════════
+//  AI JOBS — Bloem content engine
+// ══════════════════════════════════════════════════════════
+
+model AiJob {
+  id         String    @id @default(cuid())
+  type       AiJobType
+  status     String    @default("pending") // pending | processing | done | failed
+  language   Language  @default(NL)
+
+  // Input context
+  inputText  String?   // blog/PDF text for repurposing
+  inputUrl   String?   // website URL for context
+  sector     String?
+  platform   Platform?
+  tone       String?   // formal | personal | educational | inspiring
+  postsCount Int       @default(1)
+
+  // Output
+  result     Json?     // { posts: [{content, hashtags, platform, score}] }
+  errorMsg   String?
+  tokensUsed Int?
+
+  // Relations
+  orgId      String
+  org        Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User         @relation(fields: [userId], references: [id])
+  posts      Post[]
+
+  startedAt  DateTime?
+  finishedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([orgId, status])
+  @@map("ai_jobs")
+}
+
+// ══════════════════════════════════════════════════════════
+//  ANALYTICS
+// ══════════════════════════════════════════════════════════
+
+model PostAnalytics {
+  id           String   @id @default(cuid())
+  postId       String   @unique
+  post         Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  // Engagement
+  impressions  Int      @default(0)
+  reach        Int      @default(0)
+  likes        Int      @default(0)
+  comments     Int      @default(0)
+  shares       Int      @default(0)
+  clicks       Int      @default(0)
+  saves        Int      @default(0)
+
+  // LinkedIn specific
+  liReactions  Int      @default(0)
+  liReposts    Int      @default(0)
+
+  // Computed
+  engagementRate Float  @default(0) // (likes+comments+shares)/impressions
+
+  lastSyncAt   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("post_analytics")
+}
+
+model AnalyticsSnapshot {
+  id             String   @id @default(cuid())
+  date           DateTime // daily snapshot date (truncated to day)
+  platform       Platform
+
+  // Aggregate metrics
+  totalPosts     Int      @default(0)
+  totalReach     Int      @default(0)
+  totalImpressions Int    @default(0)
+  totalEngagement Int     @default(0)
+  avgEngagementRate Float @default(0)
+  followerGrowth Int      @default(0)
+  followerCount  Int      @default(0)
+  linkClicks     Int      @default(0)
+
+  orgId          String
+  org            Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+
+  @@unique([orgId, platform, date])
+  @@index([orgId, date])
+  @@map("analytics_snapshots")
+}
+
+// ══════════════════════════════════════════════════════════
+//  EMPLOYEE ADVOCACY
+// ══════════════════════════════════════════════════════════
+
+model AdvocacyItem {
+  id         String         @id @default(cuid())
+  status     AdvocacyStatus @default(PENDING)
+  sharedAt   DateTime?
+  message    String?        // optional personal note from employee
+
+  postId     String
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  userId     String
+  user       User     @relation("EmployeeAdvocacy", fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([postId, userId])
+  @@map("advocacy_items")
+}
+
+// ══════════════════════════════════════════════════════════
+//  ORG DESIGN SYSTEM (Bloem brand context)
+// ══════════════════════════════════════════════════════════
+
+model OrgDesignSystem {
+  id              String  @id @default(cuid())
+  orgId           String  @unique
+  org             Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // Brand voice
+  brandName       String?
+  brandDescription String?
+  targetAudience  String?
+  usp             String? // unique selling proposition
+  toneKeywords    String[] // e.g. ["professioneel", "toegankelijk", "betrouwbaar"]
+  avoidKeywords   String[] // words/phrases to avoid
+
+  // Source material for Bloem
+  websiteUrl      String?
+  websiteContent  String? // scraped/cached content
+  lastScrapedAt   DateTime?
+
+  // Approved post examples (few-shot)
+  examplePosts    String[] // approved post texts for style matching
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("org_design_systems")
+}
