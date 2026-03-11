@@ -1657,6 +1657,72 @@ footer{background:#080E1A;padding:64px 0 32px;color:rgba(255,255,255,.5)}
   </div>
 </footer>
 
+<!-- ════════════════ AUTH MODALS ════════════════ -->
+<div id="auth-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-title" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(15,23,42,.7);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:24px;width:100%;max-width:440px;padding:40px;box-shadow:0 32px 80px rgba(0,0,0,.22);position:relative;animation:fadeUp .3s ease">
+    <!-- Close -->
+    <button onclick="closeAuth()" aria-label="Sluiten" style="position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:var(--surface-2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--text-muted)">✕</button>
+
+    <!-- Logo -->
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:1.6rem;font-weight:800;color:var(--blue);letter-spacing:-.03em">🌸 Bloei</div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;background:var(--surface-2);border-radius:12px;padding:4px;margin-bottom:28px">
+      <button id="tab-login" onclick="switchTab('login')" style="flex:1;padding:9px;border-radius:9px;font-weight:600;font-size:.9rem;font-family:var(--font);border:none;cursor:pointer;background:var(--blue);color:#fff;transition:all .2s">Inloggen</button>
+      <button id="tab-register" onclick="switchTab('register')" style="flex:1;padding:9px;border-radius:9px;font-weight:600;font-size:.9rem;font-family:var(--font);border:none;cursor:pointer;background:transparent;color:var(--text-muted);transition:all .2s">Account aanmaken</button>
+    </div>
+
+    <!-- Alert -->
+    <div id="auth-alert" style="display:none;padding:12px 16px;border-radius:10px;font-size:.875rem;margin-bottom:16px;font-weight:500"></div>
+
+    <!-- LOGIN FORM -->
+    <form id="form-login" onsubmit="doLogin(event)">
+      <h2 id="auth-title" style="font-size:1.25rem;font-weight:700;margin-bottom:6px;color:var(--text)">Welkom terug</h2>
+      <p style="font-size:.875rem;color:var(--text-muted);margin-bottom:24px">Log in op je Bloei-account</p>
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:.85rem;font-weight:600;margin-bottom:6px;color:var(--text)">E-mailadres</label>
+        <input id="login-email" type="email" required autocomplete="email" placeholder="jij@bedrijf.nl" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:.95rem;font-family:var(--font);outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div style="margin-bottom:8px">
+        <label style="display:block;font-size:.85rem;font-weight:600;margin-bottom:6px;color:var(--text)">Wachtwoord</label>
+        <input id="login-password" type="password" required autocomplete="current-password" placeholder="••••••••" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:.95rem;font-family:var(--font);outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div style="text-align:right;margin-bottom:20px"><a href="#" style="font-size:.82rem;color:var(--blue);font-weight:500">Wachtwoord vergeten?</a></div>
+      <button type="submit" id="btn-login" style="width:100%;padding:13px;background:var(--grad-blue);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:opacity .2s">Inloggen →</button>
+      <p style="text-align:center;margin-top:16px;font-size:.85rem;color:var(--text-muted)">Nog geen account? <button type="button" onclick="switchTab('register')" style="background:none;border:none;color:var(--blue);font-weight:600;cursor:pointer;font-family:var(--font)">Maak er gratis een aan</button></p>
+      <p style="text-align:center;margin-top:10px;font-size:.78rem;color:var(--text-light)">Demo: demo@bloei.nl / bloei_demo_2025</p>
+    </form>
+
+    <!-- REGISTER FORM -->
+    <form id="form-register" onsubmit="doRegister(event)" style="display:none">
+      <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:6px;color:var(--text)">30 dagen gratis starten</h2>
+      <p style="font-size:.875rem;color:var(--text-muted);margin-bottom:24px">Geen creditcard nodig · Maandelijks opzegbaar</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div>
+          <label style="display:block;font-size:.85rem;font-weight:600;margin-bottom:6px">Voornaam</label>
+          <input id="reg-name" type="text" required placeholder="Sophie" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:.95rem;font-family:var(--font);outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <div>
+          <label style="display:block;font-size:.85rem;font-weight:600;margin-bottom:6px">Bedrijfsnaam</label>
+          <input id="reg-org" type="text" required placeholder="Bakker BV" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:.95rem;font-family:var(--font);outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:.85rem;font-weight:600;margin-bottom:6px">Zakelijk e-mailadres</label>
+        <input id="reg-email" type="email" required autocomplete="email" placeholder="sophie@bakker.nl" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:.95rem;font-family:var(--font);outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:.85rem;font-weight:600;margin-bottom:6px">Wachtwoord <span style="color:var(--text-light);font-weight:400">(min. 8 tekens)</span></label>
+        <input id="reg-password" type="password" required minlength="8" autocomplete="new-password" placeholder="••••••••" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:.95rem;font-family:var(--font);outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <button type="submit" id="btn-register" style="width:100%;padding:13px;background:var(--grad-blue);color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:opacity .2s">Account aanmaken →</button>
+      <p style="text-align:center;margin-top:16px;font-size:.82rem;color:var(--text-muted)">Door te registreren ga je akkoord met onze <a href="#" style="color:var(--blue)">gebruiksvoorwaarden</a>.</p>
+    </form>
+  </div>
+</div>
+
 <!-- ════════════════ JAVASCRIPT ════════════════ -->
 <script>
 // ── Nav scroll shadow ──
@@ -1757,5 +1823,167 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     }
   });
 });
+
+// ════════════════ AUTH ════════════════
+const API = 'http://localhost:3001/api/v1';
+
+// Token helpers
+const auth = {
+  set(data) {
+    localStorage.setItem('bloei_token', data.accessToken);
+    localStorage.setItem('bloei_refresh', data.refreshToken);
+    localStorage.setItem('bloei_user', JSON.stringify(data.user));
+    localStorage.setItem('bloei_org', JSON.stringify(data.org));
+  },
+  clear() { ['bloei_token','bloei_refresh','bloei_user','bloei_org'].forEach(k => localStorage.removeItem(k)); },
+  token() { return localStorage.getItem('bloei_token'); },
+  isLoggedIn() { return !!localStorage.getItem('bloei_token'); },
+};
+
+// Open / close modal
+function openAuth(tab = 'login') {
+  const overlay = document.getElementById('auth-overlay');
+  overlay.style.display = 'flex';
+  switchTab(tab);
+  clearAlert();
+  document.body.style.overflow = 'hidden';
+}
+function closeAuth() {
+  document.getElementById('auth-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.getElementById('auth-overlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeAuth();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAuth(); });
+
+// Tab switch
+function switchTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('form-login').style.display    = isLogin ? 'block' : 'none';
+  document.getElementById('form-register').style.display = isLogin ? 'none' : 'block';
+  const tabLogin = document.getElementById('tab-login');
+  const tabReg   = document.getElementById('tab-register');
+  tabLogin.style.background  = isLogin ? 'var(--blue)' : 'transparent';
+  tabLogin.style.color       = isLogin ? '#fff' : 'var(--text-muted)';
+  tabReg.style.background    = isLogin ? 'transparent' : 'var(--blue)';
+  tabReg.style.color         = isLogin ? 'var(--text-muted)' : '#fff';
+  clearAlert();
+}
+
+function showAlert(msg, isError = true) {
+  const el = document.getElementById('auth-alert');
+  el.style.display      = 'block';
+  el.style.background   = isError ? '#FEF2F2' : '#ECFDF5';
+  el.style.color        = isError ? '#DC2626' : '#059669';
+  el.style.border       = `1px solid ${isError ? '#FECACA' : '#A7F3D0'}`;
+  el.textContent = msg;
+}
+function clearAlert() {
+  const el = document.getElementById('auth-alert');
+  el.style.display = 'none';
+  el.textContent = '';
+}
+
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.style.opacity = loading ? '.65' : '1';
+  btn.textContent = loading ? 'Even geduld…' : (btnId === 'btn-login' ? 'Inloggen →' : 'Account aanmaken →');
+}
+
+// Login
+async function doLogin(e) {
+  e.preventDefault();
+  clearAlert();
+  setLoading('btn-login', true);
+  try {
+    const res = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email:    document.getElementById('login-email').value.trim(),
+        password: document.getElementById('login-password').value,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Inloggen mislukt');
+    auth.set(data);
+    showAlert('Ingelogd! Dashboard wordt geladen…', false);
+    setTimeout(() => { window.location.href = 'bloei-app.html'; }, 800);
+  } catch (err) {
+    showAlert(err.message);
+  } finally {
+    setLoading('btn-login', false);
+  }
+}
+
+// Register
+async function doRegister(e) {
+  e.preventDefault();
+  clearAlert();
+  setLoading('btn-register', true);
+  try {
+    const res = await fetch(`${API}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name:     document.getElementById('reg-name').value.trim(),
+        email:    document.getElementById('reg-email').value.trim(),
+        password: document.getElementById('reg-password').value,
+        orgName:  document.getElementById('reg-org').value.trim(),
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Registratie mislukt');
+    auth.set(data);
+    showAlert('Account aangemaakt! Dashboard wordt geladen…', false);
+    setTimeout(() => { window.location.href = 'bloei-app.html'; }, 900);
+  } catch (err) {
+    showAlert(err.message);
+  } finally {
+    setLoading('btn-register', false);
+  }
+}
+
+// Wire all CTA buttons to auth modal
+function wireAuthButtons() {
+  // "Inloggen" nav link
+  document.querySelectorAll('a.btn-ghost').forEach(a => {
+    a.addEventListener('click', e => { e.preventDefault(); openAuth('login'); });
+  });
+  // All "gratis starten / probeer" CTAs
+  const registerTriggers = [
+    '.btn-hero-primary',
+    '.pricing-cta',
+    '.btn-cta-mid',
+  ];
+  registerTriggers.forEach(sel => {
+    document.querySelectorAll(sel).forEach(el => {
+      if (el.getAttribute('href') === '#' || !el.getAttribute('href')?.startsWith('#')) {
+        el.addEventListener('click', e => { e.preventDefault(); openAuth('register'); });
+      }
+    });
+  });
+}
+
+// If already logged in → show dashboard link in nav
+function updateNavForAuth() {
+  if (auth.isLoggedIn()) {
+    const user = JSON.parse(localStorage.getItem('bloei_user') || '{}');
+    const navRight = document.querySelector('.nav-right');
+    if (navRight) {
+      navRight.innerHTML = `
+        <a href="bloei-app.html" class="btn-primary" style="text-decoration:none">
+          Dashboard →
+        </a>
+        <span style="font-size:.85rem;color:var(--text-muted);padding:0 4px">${user.name ?? ''}</span>
+      `;
+    }
+  }
+}
+
+wireAuthButtons();
+updateNavForAuth();
 </script>
 </body></html>

@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bloei — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue:       #1A56DB;
+  --blue-light: #3B82F6;
+  --blue-50:    #EFF6FF;
+  --blue-100:   #DBEAFE;
+  --orange:     #F97316;
+  --orange-50:  #FFF7ED;
+  --green:      #059669;
+  --green-50:   #ECFDF5;
+  --red:        #DC2626;
+  --red-50:     #FEF2F2;
+  --purple:     #7C3AED;
+  --purple-50:  #F5F3FF;
+  --bg:         #F8FAFC;
+  --surface:    #FFFFFF;
+  --surface-2:  #F1F5F9;
+  --text:       #0F172A;
+  --text-muted: #64748B;
+  --text-light: #94A3B8;
+  --border:     #E2E8F0;
+  --shadow-sm:  0 1px 3px rgba(0,0,0,.08);
+  --shadow-md:  0 4px 16px rgba(0,0,0,.10);
+  --radius:     12px;
+  --radius-sm:  8px;
+  --sidebar-w:  240px;
+  --font:       'Plus Jakarta Sans', system-ui, sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:var(--font);border:none;background:none}
+input,textarea,select{font-family:var(--font)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.anim{animation:fadeUp .35s ease}
+
+/* ── Sidebar ───────────────────────────── */
+#sidebar{
+  width:var(--sidebar-w);min-height:100vh;background:var(--surface);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;z-index:100;
+}
+.sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid var(--border)}
+.sidebar-logo span{font-size:1.3rem;font-weight:800;color:var(--blue);letter-spacing:-.03em}
+.sidebar-logo small{display:block;font-size:.72rem;color:var(--text-light);margin-top:1px;font-weight:500}
+.sidebar-nav{flex:1;padding:12px 10px;overflow-y:auto}
+.nav-section-label{font-size:.68rem;font-weight:700;color:var(--text-light);letter-spacing:.08em;text-transform:uppercase;padding:12px 10px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);font-size:.875rem;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all .15s;margin-bottom:2px;user-select:none}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:var(--blue-50);color:var(--blue);font-weight:600}
+.nav-item .icon{width:18px;height:18px;flex-shrink:0}
+.nav-item .badge-count{margin-left:auto;background:var(--orange);color:#fff;font-size:.68rem;font-weight:700;padding:1px 6px;border-radius:100px}
+.sidebar-footer{padding:12px 10px 20px;border-top:1px solid var(--border)}
+.org-pill{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);background:var(--surface-2);cursor:pointer}
+.org-avatar{width:32px;height:32px;border-radius:8px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:#fff;flex-shrink:0}
+.org-info{min-width:0}
+.org-name{font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.org-plan{font-size:.72rem;color:var(--text-light)}
+
+/* ── Main ──────────────────────────────── */
+#main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{height:60px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:1rem;font-weight:700;flex:1}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s;border:none;font-family:var(--font)}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#1239A5}
+.btn-orange{background:var(--orange);color:#fff}
+.btn-orange:hover{background:#EA6C0A}
+.btn-ghost{background:transparent;color:var(--text-muted);border:1.5px solid var(--border)}
+.btn-ghost:hover{background:var(--surface-2);color:var(--text)}
+.btn-sm{padding:6px 12px;font-size:.8rem}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+
+.page-content{padding:24px;flex:1;max-width:1200px;width:100%}
+
+/* ── Cards ─────────────────────────────── */
+.card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:20px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:.9rem;font-weight:700;color:var(--text)}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px}
+.stat-label{font-size:.78rem;font-weight:600;color:var(--text-muted);margin-bottom:8px}
+.stat-value{font-size:1.75rem;font-weight:800;color:var(--text);line-height:1;margin-bottom:4px}
+.stat-delta{font-size:.78rem;font-weight:600}
+.stat-delta.up{color:var(--green)}
+.stat-delta.down{color:var(--red)}
+
+/* ── Calendar ───────────────────────────── */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border);border-radius:var(--radius);overflow:hidden}
+.cal-day-header{background:var(--surface-2);padding:8px;font-size:.72rem;font-weight:700;color:var(--text-muted);text-align:center;text-transform:uppercase;letter-spacing:.05em}
+.cal-day{background:var(--surface);min-height:90px;padding:6px;position:relative;cursor:pointer;transition:background .15s}
+.cal-day:hover{background:var(--blue-50)}
+.cal-day.today .cal-day-num{background:var(--blue);color:#fff;border-radius:50%}
+.cal-day.other-month{background:#FAFBFC}
+.cal-day.other-month .cal-day-num{color:var(--text-light)}
+.cal-day-num{width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:600;margin-bottom:4px}
+.cal-post-pill{background:var(--blue-50);color:var(--blue);font-size:.68rem;font-weight:600;padding:2px 6px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.cal-post-pill.published{background:var(--green-50);color:var(--green)}
+.cal-post-pill.draft{background:var(--surface-2);color:var(--text-muted)}
+.cal-post-pill.failed{background:var(--red-50);color:var(--red)}
+
+/* ── Post list ──────────────────────────── */
+.post-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)}
+.post-row:last-child{border-bottom:none}
+.post-platform-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.post-content-preview{flex:1;min-width:0}
+.post-text{font-size:.875rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+.post-meta{font-size:.75rem;color:var(--text-muted)}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:100px;font-size:.72rem;font-weight:600}
+.status-badge.SCHEDULED{background:var(--blue-50);color:var(--blue)}
+.status-badge.PUBLISHED{background:var(--green-50);color:var(--green)}
+.status-badge.DRAFT{background:var(--surface-2);color:var(--text-muted)}
+.status-badge.FAILED{background:var(--red-50);color:var(--red)}
+
+/* ── Leaderboard ─────────────────────────── */
+.lb-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.lb-row:last-child{border-bottom:none}
+.lb-rank{width:28px;font-size:.85rem;font-weight:700;color:var(--text-muted);text-align:center;flex-shrink:0}
+.lb-avatar{width:36px;height:36px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:#fff;flex-shrink:0}
+.lb-name{flex:1;font-size:.875rem;font-weight:600}
+.lb-score{font-size:.875rem;font-weight:700;color:var(--blue)}
+.lb-bar-wrap{width:80px;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.lb-bar{height:100%;background:var(--blue);border-radius:3px;transition:width .5s ease}
+
+/* ── AI modal ────────────────────────────── */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(15,23,42,.65);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--surface);border-radius:20px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.2);animation:fadeUp .3s ease}
+.modal-header{padding:24px 24px 0;display:flex;align-items:flex-start;justify-content:space-between}
+.modal-body{padding:20px 24px 24px}
+.modal-title{font-size:1.1rem;font-weight:700}
+.modal-close{width:32px;height:32px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text-muted);cursor:pointer;flex-shrink:0;border:none}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:.82rem;font-weight:600;margin-bottom:6px;color:var(--text)}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:.9rem;outline:none;transition:border-color .2s;background:var(--surface)}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue)}
+.field textarea{min-height:90px;resize:vertical}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ── Analytics chart area ────────────────── */
+.chart-bars{display:flex;align-items:flex-end;gap:4px;height:100px}
+.chart-bar{flex:1;background:var(--blue-100);border-radius:3px 3px 0 0;transition:background .2s;cursor:pointer;position:relative}
+.chart-bar:hover{background:var(--blue)}
+.chart-bar-label{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:.6rem;color:var(--text-light);white-space:nowrap}
+
+/* ── Empty states ────────────────────────── */
+.empty-state{text-align:center;padding:48px 20px;color:var(--text-muted)}
+.empty-icon{font-size:2.5rem;margin-bottom:12px}
+.empty-title{font-weight:700;color:var(--text);margin-bottom:6px}
+.empty-sub{font-size:.875rem}
+
+/* ── Toast ───────────────────────────────── */
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 18px;border-radius:10px;font-size:.85rem;font-weight:600;box-shadow:var(--shadow-md);animation:fadeUp .25s ease;display:flex;align-items:center;gap:8px;max-width:320px}
+.toast.success{background:#ECFDF5;color:#059669;border:1px solid #A7F3D0}
+.toast.error{background:#FEF2F2;color:#DC2626;border:1px solid #FECACA}
+.toast.info{background:var(--blue-50);color:var(--blue);border:1px solid var(--blue-100)}
+
+/* ── Suggestions ─────────────────────────── */
+.suggestion-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;transition:border-color .2s}
+.suggestion-card:hover{border-color:var(--blue-light)}
+.suggestion-actions{display:flex;gap:8px;margin-top:12px}
+
+/* ── Platform tiles ──────────────────────── */
+.platform-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.platform-tile{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;transition:all .2s}
+.platform-tile.connected{border-color:#A7F3D0;background:var(--green-50)}
+.platform-tile-icon{font-size:1.8rem;margin-bottom:8px}
+.platform-tile-name{font-size:.82rem;font-weight:700;margin-bottom:4px}
+.platform-tile-status{font-size:.75rem;color:var(--text-muted)}
+.platform-tile.connected .platform-tile-status{color:var(--green)}
+
+/* ── Generated posts ─────────────────────── */
+.gen-post{background:var(--surface-2);border-radius:var(--radius);padding:14px;margin-bottom:10px;border:1px solid var(--border)}
+.gen-post-text{font-size:.875rem;line-height:1.6;margin-bottom:10px}
+.gen-post-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.gen-score{font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:100px;background:var(--green-50);color:var(--green)}
+.gen-hashtag{font-size:.72rem;color:var(--blue);background:var(--blue-50);padding:2px 6px;border-radius:4px}
+
+/* ── Spinner ─────────────────────────────── */
+.spinner{width:20px;height:20px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+.spinner.dark{border-color:rgba(0,0,0,.1);border-top-color:var(--blue)}
+
+/* ── Responsive ──────────────────────────── */
+@media(max-width:900px){
+  #sidebar{transform:translateX(-100%);transition:transform .25s}
+  #sidebar.open{transform:translateX(0)}
+  #main{margin-left:0}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .platform-tiles{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<nav id="sidebar" role="navigation" aria-label="Hoofdnavigatie">
+  <div class="sidebar-logo">
+    <span>🌸 Bloei</span>
+    <small id="org-name-label">Laden…</small>
+  </div>
+
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Overzicht</div>
+    <div class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </div>
+
+    <div class="nav-section-label">Content</div>
+    <div class="nav-item" data-page="calendar" onclick="navigate('calendar')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Kalender
+    </div>
+    <div class="nav-item" data-page="posts" onclick="navigate('posts')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      Berichten
+    </div>
+    <div class="nav-item" data-page="ai" onclick="navigate('ai')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 110 20A10 10 0 0112 2z"/><path d="M12 8v4l3 3"/></svg>
+      Bloem AI
+      <span class="badge-count">AI</span>
+    </div>
+
+    <div class="nav-section-label">Inzichten</div>
+    <div class="nav-item" data-page="analytics" onclick="navigate('analytics')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      Analytics
+    </div>
+    <div class="nav-item" data-page="advocacy" onclick="navigate('advocacy')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Advocacy
+    </div>
+
+    <div class="nav-section-label">Instellingen</div>
+    <div class="nav-item" data-page="platforms" onclick="navigate('platforms')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+      Platformen
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="org-pill" id="user-pill">
+      <div class="org-avatar" id="user-avatar">?</div>
+      <div class="org-info">
+        <div class="org-name" id="user-name">Laden…</div>
+        <div class="org-plan" id="user-plan">Team</div>
+      </div>
+    </div>
+    <button onclick="doLogout()" style="width:100%;margin-top:8px;padding:8px;border-radius:var(--radius-sm);font-size:.8rem;color:var(--text-muted);font-weight:500;background:transparent;border:1px solid var(--border);cursor:pointer">Uitloggen</button>
+  </div>
+</nav>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<div id="main">
+  <header class="topbar">
+    <div class="topbar-title" id="page-title">Dashboard</div>
+    <div class="topbar-actions">
+      <button class="btn btn-orange" onclick="openAIModal()">✨ Bloem AI</button>
+      <button class="btn btn-primary" onclick="navigate('posts'); setTimeout(openNewPost,100)">+ Nieuw bericht</button>
+    </div>
+  </header>
+
+  <main class="page-content" id="page-content">
+    <!-- Pages injected here by JS -->
+  </main>
+</div>
+
+<!-- ══════════════ MODALS ══════════════ -->
+
+<!-- AI Generate Modal -->
+<div id="modal-ai" class="modal-overlay" onclick="if(event.target===this)closeModal('modal-ai')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">✨ Bloem AI — Content genereren</div>
+        <div style="font-size:.8rem;color:var(--text-muted);margin-top:3px">Claude genereert Nederlandse B2B-content op maat</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-ai')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="field">
+          <label>Type</label>
+          <select id="ai-type">
+            <option value="GENERATE_SINGLE">1 bericht</option>
+            <option value="GENERATE_QUARTER">Kwartaalplan (26)</option>
+            <option value="REPURPOSE">Tekst hergebruiken</option>
+            <option value="IMPROVE">Bericht verbeteren</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Platform</label>
+          <select id="ai-platform">
+            <option value="LINKEDIN">LinkedIn</option>
+            <option value="INSTAGRAM">Instagram</option>
+            <option value="TWITTER">X / Twitter</option>
+            <option value="FACEBOOK">Facebook</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Toon</label>
+          <select id="ai-tone">
+            <option value="formal">Professioneel</option>
+            <option value="personal">Persoonlijk</option>
+            <option value="educational">Educatief</option>
+            <option value="inspiring">Inspirerend</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Taal</label>
+          <select id="ai-language">
+            <option value="NL">Nederlands</option>
+            <option value="FR">Frans (BE)</option>
+            <option value="EN">Engels</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Onderwerp / context <span style="color:var(--text-light);font-weight:400">(optioneel)</span></label>
+        <textarea id="ai-input" placeholder="Beschrijf het onderwerp, plak een blogtekst, of laat het leeg voor algemene content…"></textarea>
+      </div>
+      <button class="btn btn-orange" style="width:100%;justify-content:center;padding:12px" id="btn-generate" onclick="doGenerate()">
+        ✨ Genereren
+      </button>
+      <div id="ai-results" style="margin-top:20px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- New Post Modal -->
+<div id="modal-post" class="modal-overlay" onclick="if(event.target===this)closeModal('modal-post')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="post-modal-title">Nieuw bericht</div>
+      <button class="modal-close" onclick="closeModal('modal-post')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Platform</label>
+        <select id="post-platform">
+          <option value="LINKEDIN">LinkedIn</option>
+          <option value="INSTAGRAM">Instagram</option>
+          <option value="TWITTER">X / Twitter</option>
+          <option value="FACEBOOK">Facebook</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tekst (NL)</label>
+        <textarea id="post-content" placeholder="Schrijf hier je bericht…" style="min-height:120px"></textarea>
+      </div>
+      <div class="field">
+        <label>Inplannen op</label>
+        <input type="datetime-local" id="post-scheduled">
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="savePost('DRAFT')">Opslaan als concept</button>
+        <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="savePost('SCHEDULED')" id="btn-save-post">Inplannen</button>
+      </div>
+      <div id="post-alert" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:.82rem;font-weight:500"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- ══════════════ JAVASCRIPT ══════════════ -->
+<script>
+// ─── Config ──────────────────────────────────────────────
+const API = 'http://localhost:3001/api/v1';
+
+// ─── Auth helpers ────────────────────────────────────────
+const auth = {
+  token()   { return localStorage.getItem('bloei_token'); },
+  user()    { try { return JSON.parse(localStorage.getItem('bloei_user')||'{}'); } catch{ return {}; } },
+  org()     { try { return JSON.parse(localStorage.getItem('bloei_org')||'{}');  } catch{ return {}; } },
+  clear()   { ['bloei_token','bloei_refresh','bloei_user','bloei_org'].forEach(k=>localStorage.removeItem(k)); },
+  async headers() { return { 'Content-Type':'application/json', Authorization:`Bearer ${auth.token()}` }; },
+};
+
+// Guard: redirect if not logged in
+if (!auth.token()) {
+  window.location.href = 'bloei-nl.html';
+}
+
+// ─── API fetch helper ────────────────────────────────────
+async function api(method, path, body) {
+  const opts = { method, headers: await auth.headers() };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  if (res.status === 401) { auth.clear(); window.location.href='bloei-nl.html'; return; }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+// ─── Toast ────────────────────────────────────────────────
+function toast(msg, type='info', duration=3500) {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  const icons = { success:'✓', error:'✕', info:'ℹ' };
+  el.innerHTML = `<span>${icons[type]||'ℹ'}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), duration);
+}
+
+// ─── Navigation ───────────────────────────────────────────
+let currentPage = 'dashboard';
+
+function navigate(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.page === page);
+  });
+  const titles = {
+    dashboard:'Dashboard', calendar:'Kalender', posts:'Berichten',
+    ai:'Bloem AI', analytics:'Analytics', advocacy:'Employee Advocacy',
+    platforms:'Platformen',
+  };
+  document.getElementById('page-title').textContent = titles[page] || page;
+  const content = document.getElementById('page-content');
+  content.innerHTML = `<div style="padding:60px;text-align:center"><div class="spinner dark" style="margin:0 auto"></div></div>`;
+  pages[page] && pages[page](content);
+}
+
+// ─── Modal helpers ────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openAIModal()  { openModal('modal-ai'); document.getElementById('ai-results').innerHTML=''; }
+function openNewPost()  {
+  document.getElementById('post-modal-title').textContent = 'Nieuw bericht';
+  document.getElementById('post-content').value = '';
+  document.getElementById('post-scheduled').value = '';
+  document.getElementById('post-alert').style.display = 'none';
+  openModal('modal-post');
+}
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') {
+    ['modal-ai','modal-post'].forEach(closeModal);
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+//  PAGES
+// ═══════════════════════════════════════════════════════
+const pages = {};
+
+// ── DASHBOARD ─────────────────────────────────────────
+pages.dashboard = async function(el) {
+  el.innerHTML = '<div style="padding:60px;text-align:center"><div class="spinner dark" style="margin:0 auto"></div><p style="margin-top:12px;color:var(--text-muted);font-size:.85rem">Dashboard laden…</p></div>';
+  try {
+    const [overview, posts] = await Promise.all([
+      api('GET', '/analytics/overview?from=' + new Date(Date.now()-30*86400000).toISOString() + '&to=' + new Date().toISOString()),
+      api('GET', '/posts?limit=5&status=SCHEDULED'),
+    ]);
+    const stats = overview?.totals || {};
+    const postStatus = overview?.posts || {};
+
+    el.innerHTML = `
+    <div class="anim">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">Bereik (30d)</div>
+          <div class="stat-value">${fmt(stats.reach||0)}</div>
+          <div class="stat-delta up">↑ 12% vs vorige maand</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Impressies (30d)</div>
+          <div class="stat-value">${fmt(stats.impressions||0)}</div>
+          <div class="stat-delta up">↑ 8%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Gepubliceerd</div>
+          <div class="stat-value">${postStatus.PUBLISHED||0}</div>
+          <div class="stat-delta" style="color:var(--text-muted)">${postStatus.SCHEDULED||0} ingepland</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Advocacy gedeeld</div>
+          <div class="stat-value">${overview?.advocacyShared||0}</div>
+          <div class="stat-delta up">↑ Teamleden actief</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 340px;gap:20px">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📅 Eerstvolgende berichten</div>
+            <button class="btn btn-ghost btn-sm" onclick="navigate('calendar')">Kalender →</button>
+          </div>
+          ${renderPostList(posts?.posts||[], true)}
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-header">
+              <div class="card-title">📊 Bereik (30 dagen)</div>
+            </div>
+            ${renderMiniChart(overview?.timeline||[])}
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">⚡ Snelkoppelingen</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <button class="btn btn-orange btn-sm" onclick="openAIModal()" style="justify-content:center">✨ Genereer met Bloem AI</button>
+              <button class="btn btn-primary btn-sm" onclick="navigate('posts');setTimeout(openNewPost,100)" style="justify-content:center">+ Nieuw bericht</button>
+              <button class="btn btn-ghost btn-sm" onclick="navigate('analytics')" style="justify-content:center">📈 Bekijk analytics</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  } catch(e) {
+    el.innerHTML = renderError('Dashboard kon niet worden geladen', e.message);
+  }
+};
+
+// ── CALENDAR ──────────────────────────────────────────
+pages.calendar = async function(el) {
+  const now = new Date();
+  const year = now.getFullYear(), month = now.getMonth();
+  const from = new Date(year, month, 1).toISOString();
+  const to   = new Date(year, month+1, 0, 23, 59).toISOString();
+
+  try {
+    const data = await api('GET', `/posts/calendar?from=${from}&to=${to}`);
+    const posts = data?.posts || [];
+
+    // Build day → posts map
+    const dayMap = {};
+    posts.forEach(p => {
+      const d = new Date(p.scheduledAt).getDate();
+      if (!dayMap[d]) dayMap[d] = [];
+      dayMap[d].push(p);
+    });
+
+    const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+    const startOffset = (firstDay + 6) % 7; // Mon-first
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+    const monthNames = ['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+    const dayNames   = ['Ma','Di','Wo','Do','Vr','Za','Zo'];
+
+    let calHTML = `<div class="anim">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <h2 style="font-size:1.1rem;font-weight:700">${monthNames[month]} ${year}</h2>
+        <div style="display:flex;gap:10px">
+          <span style="font-size:.82rem;color:var(--text-muted)">${posts.length} berichten deze maand</span>
+          <button class="btn btn-primary btn-sm" onclick="openNewPost()">+ Nieuw</button>
+        </div>
+      </div>
+      <div class="cal-grid">`;
+
+    dayNames.forEach(d => calHTML += `<div class="cal-day-header">${d}</div>`);
+
+    // Empty cells before month start
+    for (let i=0; i<startOffset; i++) calHTML += `<div class="cal-day other-month"><div class="cal-day-num"></div></div>`;
+
+    for (let d=1; d<=daysInMonth; d++) {
+      const isToday = d===now.getDate() && month===now.getMonth() && year===now.getFullYear();
+      calHTML += `<div class="cal-day${isToday?' today':''}">
+        <div class="cal-day-num">${d}</div>
+        ${(dayMap[d]||[]).slice(0,3).map(p => `
+          <div class="cal-post-pill ${p.status.toLowerCase()}" title="${p.contentNl||p.contentEn||''}">
+            ${platformIcon(p.connection?.platform)} ${(p.contentNl||p.contentEn||'Bericht').slice(0,22)}
+          </div>`).join('')}
+        ${(dayMap[d]||[]).length > 3 ? `<div style="font-size:.65rem;color:var(--text-muted);padding:1px 4px">+${(dayMap[d]||[]).length-3} meer</div>` : ''}
+      </div>`;
+    }
+    calHTML += `</div></div>`;
+    el.innerHTML = calHTML;
+  } catch(e) {
+    el.innerHTML = renderError('Kalender kon niet worden geladen', e.message);
+  }
+};
+
+// ── POSTS ──────────────────────────────────────────────
+pages.posts = async function(el) {
+  el.innerHTML = '<div style="padding:48px;text-align:center"><div class="spinner dark" style="margin:0 auto"></div></div>';
+  try {
+    const data = await api('GET', '/posts?limit=30');
+    const posts = data?.posts || [];
+
+    el.innerHTML = `<div class="anim">
+      <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+        ${['Alles','SCHEDULED','PUBLISHED','DRAFT','FAILED'].map(s => `
+          <button class="btn btn-ghost btn-sm" onclick="filterPosts('${s}')" id="filter-${s}"
+            style="${s==='Alles'?'background:var(--blue);color:#fff;border-color:var(--blue)':''}">
+            ${s==='Alles'?'Alles':statusLabel(s)}
+          </button>`).join('')}
+        <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="openNewPost()">+ Nieuw bericht</button>
+      </div>
+      <div class="card" id="posts-list">
+        ${posts.length ? renderPostList(posts, false) : renderEmptyState('📝','Nog geen berichten','Maak je eerste bericht aan of gebruik Bloem AI.')}
+      </div>
+    </div>`;
+
+    // Store for filtering
+    window._allPosts = posts;
+  } catch(e) {
+    el.innerHTML = renderError('Berichten konden niet worden geladen', e.message);
+  }
+};
+
+function filterPosts(status) {
+  const posts = status==='Alles' ? window._allPosts : (window._allPosts||[]).filter(p=>p.status===status);
+  document.getElementById('posts-list').innerHTML = posts.length
+    ? renderPostList(posts, false)
+    : renderEmptyState('📝',`Geen ${statusLabel(status).toLowerCase()} berichten`,'');
+  document.querySelectorAll('[id^="filter-"]').forEach(btn => {
+    const active = btn.id === `filter-${status}`;
+    btn.style.background    = active ? 'var(--blue)' : '';
+    btn.style.color         = active ? '#fff' : '';
+    btn.style.borderColor   = active ? 'var(--blue)' : '';
+  });
+}
+
+// ── AI PAGE ────────────────────────────────────────────
+pages.ai = async function(el) {
+  const data = await api('GET', '/ai/jobs').catch(()=>({jobs:[]}));
+  const jobs = data?.jobs || [];
+
+  el.innerHTML = `<div class="anim">
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:20px">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">✨ Bloem AI — Genereer content</div>
+        </div>
+        <p style="font-size:.875rem;color:var(--text-muted);margin-bottom:20px">
+          Bloem gebruikt Claude AI met jouw merkcontext om authentieke Nederlandse B2B-posts te schrijven.
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+          ${[
+            ['GENERATE_SINGLE','✍️ 1 post schrijven','Één bericht voor een specifiek onderwerp'],
+            ['GENERATE_QUARTER','📅 Kwartaalplan','26 berichten voor het hele kwartaal'],
+            ['REPURPOSE','♻️ Tekst hergebruiken','Blog of document omzetten naar posts'],
+            ['IMPROVE','✨ Bericht verbeteren','Bestaand bericht herschrijven en verbeteren'],
+          ].map(([type, title, desc]) => `
+            <button onclick="openAIModalType('${type}')" style="text-align:left;padding:16px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--surface);cursor:pointer;transition:all .2s;font-family:var(--font)" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
+              <div style="font-size:1.2rem;margin-bottom:6px">${title.split(' ')[0]}</div>
+              <div style="font-size:.85rem;font-weight:700;margin-bottom:3px">${title.split(' ').slice(1).join(' ')}</div>
+              <div style="font-size:.78rem;color:var(--text-muted)">${desc}</div>
+            </button>`).join('')}
+        </div>
+        <button class="btn btn-orange" style="justify-content:center;width:100%;padding:12px" onclick="openAIModal()">
+          ✨ Open Bloem AI
+        </button>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📋 Recente jobs</div></div>
+        ${jobs.length ? jobs.slice(0,8).map(j => `
+          <div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:.82rem">
+            <div style="font-weight:600;margin-bottom:2px">${jobTypeLabel(j.type)}</div>
+            <div style="color:var(--text-muted);display:flex;align-items:center;gap:6px">
+              <span class="status-badge ${j.status==='done'?'PUBLISHED':j.status==='failed'?'FAILED':'SCHEDULED'}" style="font-size:.68rem">${j.status}</span>
+              ${formatDate(j.createdAt)}
+            </div>
+          </div>`).join('')
+        : '<div class="empty-state" style="padding:24px 0"><div class="empty-icon">🤖</div><div class="empty-sub">Nog geen AI-jobs</div></div>'}
+      </div>
+    </div>
+  </div>`;
+};
+
+function openAIModalType(type) {
+  document.getElementById('ai-type').value = type;
+  openAIModal();
+}
+
+// ── ANALYTICS ─────────────────────────────────────────
+pages.analytics = async function(el) {
+  el.innerHTML = '<div style="padding:48px;text-align:center"><div class="spinner dark" style="margin:0 auto"></div></div>';
+  try {
+    const [overview, topPosts, benchmark] = await Promise.all([
+      api('GET', '/analytics/overview?from=' + new Date(Date.now()-30*86400000).toISOString() + '&to=' + new Date().toISOString()),
+      api('GET', '/analytics/posts?limit=5&sortBy=impressions'),
+      api('GET', '/analytics/benchmark'),
+    ]);
+
+    const stats = overview?.totals || {};
+    const engRate = (overview?.avgEngagementRate||0).toFixed(1);
+    const bm = benchmark || {};
+
+    el.innerHTML = `<div class="anim">
+      <div class="stat-grid" style="margin-bottom:24px">
+        <div class="stat-card">
+          <div class="stat-label">Bereik (30d)</div>
+          <div class="stat-value">${fmt(stats.reach||0)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Impressies (30d)</div>
+          <div class="stat-value">${fmt(stats.impressions||0)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Gem. engagement</div>
+          <div class="stat-value">${engRate}%</div>
+          <div class="stat-delta ${bm.trend==='above_average'?'up':'down'}">${bm.trend==='above_average'?'↑ Boven gemiddelde':'↓ Onder gemiddelde'}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Link-clicks (30d)</div>
+          <div class="stat-value">${fmt(stats.clicks||0)}</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:20px">
+        <div class="card">
+          <div class="card-header"><div class="card-title">📈 Bereik per dag (30 dagen)</div></div>
+          ${renderBarChart(overview?.timeline||[])}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card">
+            <div class="card-header"><div class="card-title">🏆 Sector benchmark</div></div>
+            ${renderBenchmark(bm)}
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">⭐ Top berichten</div></div>
+            ${(topPosts?.posts||[]).slice(0,4).map(p => `
+              <div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:.82rem">
+                <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px">
+                  ${platformIcon(p.connection?.platform)} ${(p.contentNl||p.contentEn||'Bericht').slice(0,40)}
+                </div>
+                <div style="color:var(--text-muted)">${fmt(p.analytics?.impressions||0)} impressies · ${(p.analytics?.engagementRate||0).toFixed(1)}% engagement</div>
+              </div>`).join('') || '<div style="color:var(--text-muted);font-size:.85rem;padding:12px 0">Nog geen analytics data</div>'}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  } catch(e) {
+    el.innerHTML = renderError('Analytics konden niet worden geladen', e.message);
+  }
+};
+
+// ── ADVOCACY ──────────────────────────────────────────
+pages.advocacy = async function(el) {
+  el.innerHTML = '<div style="padding:48px;text-align:center"><div class="spinner dark" style="margin:0 auto"></div></div>';
+  try {
+    const [lb, suggestions] = await Promise.all([
+      api('GET', '/advocacy/leaderboard'),
+      api('GET', '/advocacy/suggestions'),
+    ]);
+
+    const members = lb?.leaderboard || [];
+    const maxScore = members[0]?.score || 1;
+    const suggs   = suggestions?.suggestions || [];
+
+    el.innerHTML = `<div class="anim">
+      <div style="display:grid;grid-template-columns:1fr 340px;gap:20px">
+        <div>
+          ${suggs.length ? `<div class="card" style="margin-bottom:20px">
+            <div class="card-header">
+              <div class="card-title">🔔 Jouw openstaande suggesties <span class="badge-count" style="background:var(--orange);color:#fff;font-size:.72rem;padding:2px 7px;border-radius:100px;margin-left:6px">${suggs.length}</span></div>
+            </div>
+            ${suggs.map(s => `
+              <div class="suggestion-card" id="sugg-${s.id}">
+                <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:6px">${platformIcon(s.post?.connection?.platform)} ${s.post?.connection?.platform||'Bericht'}</div>
+                <div style="font-size:.875rem;line-height:1.5">${(s.post?.contentNl||s.post?.contentEn||'').slice(0,180)}…</div>
+                ${s.post?.hashtags?.length ? `<div style="margin-top:6px">${s.post.hashtags.slice(0,4).map(h=>`<span class="gen-hashtag">${h}</span>`).join(' ')}</div>` : ''}
+                <div class="suggestion-actions">
+                  <button class="btn btn-primary btn-sm" onclick="shareAdvocacy('${s.id}')">✓ Delen (+10 pts)</button>
+                  <button class="btn btn-ghost btn-sm" onclick="declineAdvocacy('${s.id}')">Afwijzen</button>
+                </div>
+              </div>`).join('')}
+          </div>` : ''}
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🏆 Team scorebord</div>
+              <span style="font-size:.78rem;color:var(--text-muted)">Afgelopen 30 dagen</span>
+            </div>
+            ${members.map(m => `
+              <div class="lb-row">
+                <div class="lb-rank">${m.badge||m.rank}</div>
+                <div class="lb-avatar">${(m.name||'?')[0].toUpperCase()}</div>
+                <div style="flex:1;min-width:0">
+                  <div class="lb-name">${m.name||'Onbekend'}</div>
+                  <div style="font-size:.75rem;color:var(--text-muted)">${m.postsShared} gedeeld · ${m.streak}w streak</div>
+                </div>
+                <div class="lb-bar-wrap"><div class="lb-bar" style="width:${Math.round((m.score/maxScore)*100)}%"></div></div>
+                <div class="lb-score">${m.score} pts</div>
+              </div>`).join('')}
+            ${!members.length ? renderEmptyState('👥','Nog geen data','Teamleden worden hier zichtbaar zodra ze posts delen.') : ''}
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">📖 Hoe werkt Advocacy?</div></div>
+          <div style="font-size:.85rem;line-height:1.7;color:var(--text-muted)">
+            <p style="margin-bottom:12px">Als manager stuur je goedgekeurde berichten door naar teamleden. Zij kunnen deze met één klik op hun eigen LinkedIn-profiel plaatsen.</p>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              ${[
+                ['Delen','10 punten per gedeeld bericht'],
+                ['Streak','Bonus voor consistentie'],
+                ['Score','Cumulatief scorebord'],
+              ].map(([label,desc]) => `
+                <div style="padding:10px 12px;background:var(--surface-2);border-radius:8px">
+                  <div style="font-weight:600;font-size:.82rem;margin-bottom:2px">🎯 ${label}</div>
+                  <div style="font-size:.78rem">${desc}</div>
+                </div>`).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  } catch(e) {
+    el.innerHTML = renderError('Advocacy kon niet worden geladen', e.message);
+  }
+};
+
+// ── PLATFORMS ─────────────────────────────────────────
+pages.platforms = async function(el) {
+  const data = await api('GET', '/platforms').catch(()=>({connections:[]}));
+  const connections = data?.connections || [];
+  const connMap = {};
+  connections.forEach(c => { connMap[c.platform] = c; });
+
+  const platforms = [
+    { key:'LINKEDIN',  icon:'in', name:'LinkedIn',  color:'#0A66C2', desc:'Beste resultaten voor B2B' },
+    { key:'INSTAGRAM', icon:'ig', name:'Instagram',  color:'#E1306C', desc:'Visuele content & Reels' },
+    { key:'TWITTER',   icon:'𝕏',  name:'X / Twitter',color:'#000',   desc:'Real-time updates' },
+    { key:'FACEBOOK',  icon:'f',  name:'Facebook',   color:'#1877F2', desc:'Company page' },
+    { key:'TIKTOK',    icon:'tt', name:'TikTok',     color:'#000',   desc:'Video-first platform' },
+    { key:'WHATSAPP_BUSINESS', icon:'wa', name:'WhatsApp Business', color:'#25D366', desc:'Nieuwsbrieven & broadcasts' },
+  ];
+
+  el.innerHTML = `<div class="anim">
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header">
+        <div class="card-title">🔗 Gekoppelde platformen</div>
+        <span style="font-size:.8rem;color:var(--text-muted)">${connections.length} van ${platforms.length} gekoppeld</span>
+      </div>
+      <div class="platform-tiles">
+        ${platforms.map(p => {
+          const conn = connMap[p.key];
+          return `<div class="platform-tile ${conn?'connected':''}">
+            <div class="platform-tile-icon" style="width:40px;height:40px;border-radius:10px;background:${p.color};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:.9rem;margin:0 auto 8px">${p.icon}</div>
+            <div class="platform-tile-name">${p.name}</div>
+            <div class="platform-tile-status">${conn ? `✓ ${conn.platformName}` : p.desc}</div>
+            ${conn
+              ? `<div style="font-size:.72rem;color:var(--text-muted);margin-top:4px">${conn.followerCount ? fmt(conn.followerCount)+' volgers' : ''}</div>
+                 <button class="btn btn-ghost btn-sm" style="margin-top:8px;width:100%;font-size:.72rem;color:var(--red)" onclick="disconnectPlatform('${conn.id}','${p.name}')">Ontkoppelen</button>`
+              : `<button class="btn btn-primary btn-sm" style="margin-top:8px;width:100%;font-size:.75rem" onclick="connectPlatform('${p.key}','${p.name}')">Koppelen</button>`}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+    <div class="card" style="background:var(--blue-50);border-color:var(--blue-100)">
+      <div style="font-size:.875rem;color:var(--blue);font-weight:500;line-height:1.6">
+        <strong>ℹ️ OAuth koppelen:</strong> In productie opent dit een OAuth-flow die jou naar het platform stuurt voor toestemming. De tokens worden versleuteld opgeslagen (AES-256-GCM).
+      </div>
+    </div>
+  </div>`;
+};
+
+// ═══════════════════════════════════════════════════════
+//  ACTIONS
+// ═══════════════════════════════════════════════════════
+
+// ── Save post ─────────────────────────────────────────
+async function savePost(status) {
+  const content = document.getElementById('post-content').value.trim();
+  const scheduled = document.getElementById('post-scheduled').value;
+  const platform  = document.getElementById('post-platform').value;
+  const alertEl   = document.getElementById('post-alert');
+
+  if (!content) { showPostAlert('Voer een tekst in', true); return; }
+  if (status === 'SCHEDULED' && !scheduled) { showPostAlert('Kies een datum om in te plannen', true); return; }
+
+  document.getElementById('btn-save-post').disabled = true;
+  try {
+    await api('POST', '/posts', {
+      contentNl:   content,
+      status,
+      scheduledAt: scheduled ? new Date(scheduled).toISOString() : undefined,
+    });
+    closeModal('modal-post');
+    toast('Bericht opgeslagen!', 'success');
+    if (currentPage === 'posts' || currentPage === 'calendar') navigate(currentPage);
+  } catch(e) {
+    showPostAlert(e.message || 'Opslaan mislukt', true);
+  } finally {
+    document.getElementById('btn-save-post').disabled = false;
+  }
+}
+
+function showPostAlert(msg, isErr) {
+  const el = document.getElementById('post-alert');
+  el.style.display   = 'block';
+  el.style.background = isErr ? 'var(--red-50)' : 'var(--green-50)';
+  el.style.color      = isErr ? 'var(--red)' : 'var(--green)';
+  el.textContent = msg;
+}
+
+// ── AI Generate ──────────────────────────────────────
+async function doGenerate() {
+  const btn = document.getElementById('btn-generate');
+  const results = document.getElementById('ai-results');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Genereren…';
+  results.innerHTML = '';
+
+  try {
+    const body = {
+      type:       document.getElementById('ai-type').value,
+      platform:   document.getElementById('ai-platform').value,
+      tone:       document.getElementById('ai-tone').value,
+      language:   document.getElementById('ai-language').value,
+      postsCount: document.getElementById('ai-type').value === 'GENERATE_QUARTER' ? 26 : 1,
+      inputText:  document.getElementById('ai-input').value.trim() || undefined,
+    };
+    const data = await api('POST', '/ai/generate', body);
+
+    if (!data?.posts?.length) throw new Error('Geen posts gegenereerd');
+
+    results.innerHTML = `
+      <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:12px">
+        ${data.posts.length} bericht${data.posts.length>1?'en':''} gegenereerd · ${fmt(data.tokensUsed||0)} tokens
+      </div>
+      ${data.posts.map((p, i) => `
+        <div class="gen-post">
+          <div class="gen-post-text">${p.content}</div>
+          <div class="gen-post-meta">
+            <span class="gen-score">Score: ${p.score}/100</span>
+            ${(p.hashtags||[]).slice(0,3).map(h=>`<span class="gen-hashtag">${h}</span>`).join('')}
+          </div>
+          <div style="margin-top:10px;display:flex;gap:8px">
+            <button class="btn btn-primary btn-sm" onclick="useGeneratedPost(${i})">Inplannen</button>
+            <button class="btn btn-ghost btn-sm" onclick="copyText('${p.content.replace(/'/g,"\\'")}')">Kopiëren</button>
+          </div>
+        </div>`).join('')}`;
+
+    window._generatedPosts = data.posts;
+    toast(`${data.posts.length} bericht${data.posts.length>1?'en':''} gegenereerd!`, 'success');
+  } catch(e) {
+    results.innerHTML = `<div style="color:var(--red);font-size:.85rem;padding:12px;background:var(--red-50);border-radius:8px">
+      ${e.message || 'Genereren mislukt — controleer of de backend draait op localhost:3001'}
+    </div>`;
+    toast('Genereren mislukt', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '✨ Genereren';
+  }
+}
+
+function useGeneratedPost(i) {
+  const post = (window._generatedPosts||[])[i];
+  if (!post) return;
+  closeModal('modal-ai');
+  document.getElementById('post-content').value = post.content;
+  document.getElementById('post-platform').value = post.platform || 'LINKEDIN';
+  document.getElementById('post-alert').style.display = 'none';
+  openModal('modal-post');
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => toast('Gekopieerd!', 'success'));
+}
+
+// ── Advocacy actions ──────────────────────────────────
+async function shareAdvocacy(itemId) {
+  try {
+    const data = await api('POST', `/advocacy/${itemId}/share`, {});
+    document.getElementById(`sugg-${itemId}`)?.remove();
+    toast(data?.message || 'Gedeeld! +10 punten 🎉', 'success');
+  } catch(e) { toast('Delen mislukt', 'error'); }
+}
+async function declineAdvocacy(itemId) {
+  await api('POST', `/advocacy/${itemId}/decline`, {});
+  document.getElementById(`sugg-${itemId}`)?.remove();
+  toast('Suggestie afgewezen', 'info');
+}
+
+// ── Platform actions ──────────────────────────────────
+function connectPlatform(platform, name) {
+  toast(`OAuth-flow voor ${name} zou hier openen`, 'info');
+}
+async function disconnectPlatform(id, name) {
+  if (!confirm(`${name} ontkoppelen?`)) return;
+  await api('DELETE', `/platforms/${id}`);
+  toast(`${name} ontkoppeld`, 'info');
+  navigate('platforms');
+}
+
+// ── Logout ────────────────────────────────────────────
+async function doLogout() {
+  const refresh = localStorage.getItem('bloei_refresh');
+  if (refresh) await api('POST', '/auth/logout', { refreshToken: refresh }).catch(()=>{});
+  auth.clear();
+  window.location.href = 'bloei-nl.html';
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER HELPERS
+// ═══════════════════════════════════════════════════════
+function renderPostList(posts, compact) {
+  if (!posts.length) return renderEmptyState('📝','Geen berichten','Maak je eerste bericht aan.');
+  return posts.map(p => `
+    <div class="post-row">
+      <div class="post-platform-dot" style="background:${platformColor(p.connection?.platform)}"></div>
+      <div class="post-content-preview">
+        <div class="post-text">${p.contentNl || p.contentEn || '(geen tekst)'}</div>
+        <div class="post-meta">${platformIcon(p.connection?.platform)} ${p.connection?.platform||'Concept'} · ${p.scheduledAt ? formatDate(p.scheduledAt) : 'Niet ingepland'}</div>
+      </div>
+      <span class="status-badge ${p.status}">${statusLabel(p.status)}</span>
+      ${!compact ? `<button class="btn btn-ghost btn-sm" onclick="deletePost('${p.id}')">✕</button>` : ''}
+    </div>`).join('');
+}
+
+function renderMiniChart(timeline) {
+  if (!timeline.length) return '<div style="color:var(--text-muted);font-size:.8rem;text-align:center;padding:20px">Geen data</div>';
+  const max = Math.max(...timeline.map(t=>t.totalReach||0), 1);
+  const recent = timeline.slice(-14);
+  return `<div class="chart-bars" style="padding-bottom:20px">
+    ${recent.map(t => `<div class="chart-bar" title="${fmt(t.totalReach||0)} bereik" style="height:${Math.max(4,Math.round(((t.totalReach||0)/max)*100))}px"></div>`).join('')}
+  </div>`;
+}
+
+function renderBarChart(timeline) {
+  if (!timeline.length) return '<div style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:40px">Geen analytics data beschikbaar</div>';
+  const max = Math.max(...timeline.map(t=>t.totalReach||0), 1);
+  const days = ['Ma','Di','Wo','Do','Vr','Za','Zo'];
+  return `<div style="padding-bottom:28px">
+    <div class="chart-bars" style="height:120px">
+      ${timeline.map((t,i) => `
+        <div class="chart-bar" style="height:${Math.max(4,Math.round(((t.totalReach||0)/max)*100))}%" title="${new Date(t.date).toLocaleDateString('nl-NL')}: ${fmt(t.totalReach||0)} bereik">
+        </div>`).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.7rem;color:var(--text-light)">
+      <span>${new Date(timeline[0]?.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short'})}</span>
+      <span>${new Date(timeline[timeline.length-1]?.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short'})}</span>
+    </div>
+    <div style="display:flex;gap:16px;margin-top:12px;font-size:.78rem;color:var(--text-muted)">
+      <span>Max bereik: <strong>${fmt(Math.max(...timeline.map(t=>t.totalReach||0)))}</strong></span>
+      <span>Gem: <strong>${fmt(Math.round(timeline.reduce((a,t)=>a+(t.totalReach||0),0)/timeline.length))}</strong></span>
+    </div>
+  </div>`;
+}
+
+function renderBenchmark(bm) {
+  if (!bm.yourEngagementRate) return '<div style="color:var(--text-muted);font-size:.82rem">Geen benchmark data</div>';
+  const pct = Math.min(100, Math.round((bm.yourEngagementRate / bm.topQuartile) * 100));
+  return `
+    <div style="font-size:.82rem;margin-bottom:12px;color:var(--text-muted)">LinkedIn engagement rate</div>
+    <div style="font-size:1.6rem;font-weight:800;color:${bm.trend==='above_average'?'var(--green)':'var(--orange)'};margin-bottom:4px">${bm.yourEngagementRate}%</div>
+    <div style="height:6px;background:var(--border);border-radius:3px;margin-bottom:8px;overflow:hidden">
+      <div style="height:100%;width:${pct}%;background:${bm.trend==='above_average'?'var(--green)':'var(--orange)'};border-radius:3px;transition:width .5s ease"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-muted);margin-bottom:12px">
+      <span>Sector gem: ${bm.industryAverage}%</span>
+      <span>Top 25%: ${bm.topQuartile}%</span>
+    </div>
+    <div style="font-size:.8rem;color:var(--text);background:var(--surface-2);padding:10px 12px;border-radius:8px;line-height:1.5">${bm.tip||''}</div>`;
+}
+
+function renderEmptyState(icon, title, sub) {
+  return `<div class="empty-state"><div class="empty-icon">${icon}</div><div class="empty-title">${title}</div><div class="empty-sub">${sub}</div></div>`;
+}
+function renderError(title, detail) {
+  return `<div class="card" style="border-color:var(--red-50)">
+    <div style="color:var(--red);font-weight:700;margin-bottom:8px">⚠ ${title}</div>
+    <div style="font-size:.82rem;color:var(--text-muted)">${detail||''}</div>
+    <div style="font-size:.78rem;margin-top:12px;color:var(--text-muted)">Controleer of de backend draait: <code style="background:var(--surface-2);padding:2px 6px;border-radius:4px">cd backend && bun run dev</code></div>
+  </div>`;
+}
+
+async function deletePost(id) {
+  if (!confirm('Bericht verwijderen?')) return;
+  await api('DELETE', `/posts/${id}`);
+  toast('Bericht verwijderd', 'info');
+  navigate('posts');
+}
+
+// ── Formatters ────────────────────────────────────────
+function fmt(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1)+'M';
+  if (n >= 1000)    return (n/1000).toFixed(1)+'K';
+  return String(n);
+}
+function formatDate(d) {
+  if (!d) return '';
+  return new Date(d).toLocaleDateString('nl-NL', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+}
+function statusLabel(s) {
+  return {SCHEDULED:'Ingepland',PUBLISHED:'Gepubliceerd',DRAFT:'Concept',FAILED:'Mislukt',PUBLISHING:'Bezig'}[s] || s;
+}
+function jobTypeLabel(t) {
+  return {GENERATE_QUARTER:'Kwartaalplan',GENERATE_SINGLE:'Post schrijven',REPURPOSE:'Hergebruiken',IMPROVE:'Verbeteren',SCORE_POST:'Score'}[t] || t;
+}
+function platformIcon(p) {
+  return {LINKEDIN:'🔵',INSTAGRAM:'📸',TWITTER:'𝕏',FACEBOOK:'📘',TIKTOK:'🎵',WHATSAPP_BUSINESS:'💬'}[p] || '📄';
+}
+function platformColor(p) {
+  return {LINKEDIN:'#0A66C2',INSTAGRAM:'#E1306C',TWITTER:'#000',FACEBOOK:'#1877F2',TIKTOK:'#000',WHATSAPP_BUSINESS:'#25D366'}[p] || 'var(--blue)';
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+(function init() {
+  const user = auth.user();
+  const org  = auth.org();
+
+  document.getElementById('user-name').textContent  = user.name || 'Gebruiker';
+  document.getElementById('org-name-label').textContent = org.name || 'Mijn organisatie';
+  document.getElementById('user-plan').textContent  = org.plan  || 'Team';
+  document.getElementById('user-avatar').textContent = (user.name||'?')[0].toUpperCase();
+
+  navigate('dashboard');
+})();
+</script>
+</body>
+</html>
