@@ -233,3 +233,117 @@ Never push directly to `main`. Always:
 - **Token-optimized output** — search results are truncated at 300 chars per field to stay within AI context limits
 - **Platform configs in JSON** — adding a new AI platform only requires a new `platforms/<name>.json` and entry in `AI_TO_PLATFORM` in `template.ts`
 - **Stacks are additive** — each stack CSV contains independent guidelines; search falls back to `html-tailwind` defaults when a stack CSV is missing
+
+---
+
+## Bloei — Dutch B2B Social Media SaaS
+
+This repo also contains the **Bloei** product: a Dutch B2B social media scheduling SaaS built on top of the Antigravity Kit design system.
+
+### Bloei Architecture
+
+```
+preview/
+├── bloei-nl.html          # Marketing landing page + auth modals (login/register)
+└── bloei-app.html         # Full dashboard SPA (calendar, posts, AI, analytics, advocacy)
+
+backend/                   # REST API — Fastify + TypeScript + PostgreSQL
+├── prisma/schema.prisma   # 10 DB models (see below)
+├── src/
+│   ├── index.ts           # Fastify app entry — registers all plugins + routes
+│   ├── config.ts          # Centralized env config (validated at startup)
+│   ├── lib/
+│   │   ├── errors.ts      # AppError + E.notFound/unauthorized/etc helpers
+│   │   └── crypto.ts      # AES-256-GCM encrypt/decrypt for OAuth tokens
+│   ├── plugins/
+│   │   ├── db.ts          # Prisma plugin (app.db)
+│   │   ├── auth.ts        # JWT verify + app.authenticate preHandler
+│   │   └── redis-queue.ts # BullMQ queue plugin (app.postQueue)
+│   ├── routes/
+│   │   ├── auth.ts        # POST /auth/register|login|refresh|logout
+│   │   ├── users.ts       # GET|PUT /users/me, change-password
+│   │   ├── orgs.ts        # GET|PUT /orgs/me, members invite/remove
+│   │   ├── posts.ts       # CRUD /posts, calendar, bulk-schedule
+│   │   ├── platforms.ts   # GET|POST|DELETE /platforms (OAuth connections)
+│   │   ├── ai.ts          # POST /ai/generate|score, GET /ai/jobs
+│   │   ├── analytics.ts   # GET /analytics/overview|posts|benchmark
+│   │   ├── advocacy.ts    # GET leaderboard|suggestions, POST share|decline|suggest
+│   │   └── webhooks.ts    # POST /webhooks/linkedin|instagram
+│   └── services/
+│       ├── bloem.ts       # Claude AI content engine (generate/score/repurpose)
+│       ├── scheduler.ts   # BullMQ worker — publishes posts at scheduled time
+│       └── social.ts      # Platform API adapters (LinkedIn/Instagram/Twitter/etc)
+└── scripts/seed.ts        # Demo data seed (org, users, posts, 30d analytics)
+```
+
+### Database Models
+
+| Model | Description |
+|-------|-------------|
+| `User` | Account with bcrypt password |
+| `RefreshToken` | JWT refresh tokens with rotation + revocation |
+| `Organisation` | Multi-tenant org (plan: SOLO/TEAM/ORGANISATIE) |
+| `TeamMember` | User ↔ Org join with role + advocacy stats |
+| `Brand` | Multi-brand per org with tone-of-voice config |
+| `PlatformConnection` | OAuth connections (tokens AES-256-GCM encrypted) |
+| `Post` | Scheduled posts: 6 statuses, 8 types, multilingual NL/FR/EN |
+| `Campaign` | Content series / quarterly plans |
+| `AiJob` | Bloem AI generation jobs with result JSON |
+| `PostAnalytics` | Per-post engagement metrics |
+| `AnalyticsSnapshot` | Daily aggregate metrics per platform |
+| `AdvocacyItem` | Employee advocacy items with gamification score |
+| `OrgDesignSystem` | Brand context for Bloem AI (examples, tone, USP) |
+
+### Bloei Dev Commands
+
+```bash
+# Start infrastructure (PostgreSQL + Redis)
+cd backend && docker compose up -d
+
+# Install & run backend
+bun install
+bun run db:push        # Apply Prisma schema
+bun run db:seed        # Load demo data
+bun run dev            # API on :3001, Swagger on :3001/docs
+
+# Open frontend (no build step — plain HTML)
+open preview/bloei-nl.html   # Landing page
+open preview/bloei-app.html  # Dashboard (requires login)
+
+# Demo login
+# Email:    demo@bloei.nl
+# Password: bloei_demo_2025
+```
+
+### Bloei Key Conventions
+
+- **Auth flow**: JWT access token (15m) + refresh token (30d, rotated on use). Tokens stored in `localStorage` on frontend.
+- **Multi-tenant isolation**: every DB query is scoped to `orgId` from JWT payload — no cross-tenant leakage.
+- **OAuth token security**: platform access tokens are AES-256-GCM encrypted in `PlatformConnection.accessTokenEnc` before storage.
+- **Post scheduling**: BullMQ job with `delay` calculated from `scheduledAt`. On reschedule, old job is removed and new one queued. Max 3 retries with exponential backoff.
+- **Bloem AI**: uses `claude-sonnet-4-6` with org-specific brand context (tone keywords, example posts, USP, sector). Output is JSON-parsed from Claude's response.
+- **Frontend**: single-file vanilla JS SPA — no build step, no framework. API calls via `fetch()` with Bearer token. Auth guard redirects to landing page if no token.
+- **Error handling**: `AppError` class with `statusCode` + `code`. Fastify global error handler formats all errors consistently.
+
+### Bloei API Base URL
+
+```
+http://localhost:3001/api/v1
+```
+
+Swagger UI: `http://localhost:3001/docs`
+
+### Adding a New API Route
+
+1. Create `backend/src/routes/<name>.ts`
+2. Export `async function <name>Routes(app: FastifyInstance)`
+3. Add `preHandler: [app.authenticate]` for protected routes
+4. Register in `backend/src/index.ts`: `await app.register(<name>Routes, { prefix: '/api/v1/<name>' })`
+
+### Adding a New Platform
+
+1. Add to `Platform` enum in `prisma/schema.prisma`
+2. Add OAuth credentials in `config.ts` → `social.*`
+3. Add publisher method in `src/services/social.ts`
+4. Add OAuth callback route in `src/routes/platforms.ts`
+5. Add tile in `preview/bloei-app.html` → `pages.platforms`
